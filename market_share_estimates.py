@@ -6,8 +6,6 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from sklearn.model_selection import train_test_split
 import pandas as pd
 from io import StringIO
 from scipy.special import logsumexp
