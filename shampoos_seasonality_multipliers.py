@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# How to run this script : 
+# 1: sudo chmod <remove_bad_lines.sh> +x
+# 2: python3 shampoos_seasonality_multipliers.py <remove_bad_lines.sh> <dataset.txt>
 
 import pandas as pd
 from io import StringIO, BytesIO
@@ -44,15 +46,12 @@ def get_sales_numbers_per_quarter_df(df):
       sales_per_quarter_dict[index] = quarter_sales
   return pd.DataFrame(sales_per_quarter_dict, index=[0])
 
-if __name__ == '__main__':
-  # Start chrono
-  start_time = time.time()
+""" sys.argv[]
+1 : Script which removes bad lines in the dataset
+2 : Dataset file containing shampoos data
+"""
 
-  """ sys.argv[]
-  1 : Script which removes bad lines in the dataset
-  2 : Dataset file containing shampoos data
-  """
-
+def main():
   if len(sys.argv) > 1:
     remove_bad_lines_file = sys.argv[1] 
     dataset = sys.argv[2]
@@ -74,10 +73,11 @@ if __name__ == '__main__':
     seasonality_multipliers = {}
     for (column_name, column_data) in df_sales_per_quarter.items():
       seasonality_multipliers[column_name] = column_data.values/total_sales_numbers
-
-  # End the chrono
-  end_time = time.time()
-  final_time = end_time - start_time
-  print(f"-- {final_time} seconds--")
-
   return seasonality_multipliers
+
+start_time = time.time()
+output = main()
+end_time = time.time()
+final_time = end_time - start_time
+print(f"-- shampoos seasonality multipliers = {output} DONE")
+print(f"-- {final_time} seconds--")
