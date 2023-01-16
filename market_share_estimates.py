@@ -1,3 +1,5 @@
+# How to run this script : python3 market_share_estimates.py <dataset.txt> <ranking_outputs.xlsx>
+
 import matplotlib.pyplot as plt
 import sys, time
 import numpy as np
@@ -10,15 +12,18 @@ import pandas as pd
 from io import StringIO
 from scipy.special import logsumexp
 
+# Create dataframe from the txt file passed as a first argument of this python script execution
 def create_dataframe():
-  headers = ['timestamp','week','barcodes','type','segment','category','description','weight','sales_numbers','price','sales_value','discounts']
+  headers = ['libelle_var','week','barcodes','type','segment','category','description','weight','sales_numbers','price','sales_value','discounts']
   df = pd.read_csv(sys.argv[1], sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
   print(f"-- create dataframe DONE")
   return df
 
+# Sort data per ascending barcode
 def sort_data_per_barcode(df):
   return df.sort_values('barcodes')
 
+# Get five products barcodes which are competitors of the new product
 def find_five_products(df):
   five_products_barcodes = []
   for barcode in df.barcodes.unique():
@@ -26,6 +31,8 @@ def find_five_products(df):
   print(f"-- find five products DONE")
   return five_products_barcodes[:5]
 
+# Get the sales numbers of the five competitors by their barcode
+# and add the new product dataframe row
 def get_sales_numbers_for_five_shampoos(df, five_barcodes):
   five_new_barcodes = []
   for barcode in five_barcodes:
@@ -52,10 +59,10 @@ def get_sales_numbers_for_five_shampoos(df, five_barcodes):
   print(f"-- get sales numbers for five shampoos DONE")
   return pd.DataFrame(five_products_dict)
 
+# Calculate the market shares of the five competitors by retrieving their sales numbers
 def get_competing_products_mshares(dataframe):
   total_sales_number = dataframe['sales_numbers'].sum()
   market_shares_list = [] 
-  #print(f"total_sales_number={total_sales_number}")
   if total_sales_number > 0:  
     for sn in dataframe['sales_numbers']:
       market_share = (sn/total_sales_number) * 100
@@ -64,6 +71,8 @@ def get_competing_products_mshares(dataframe):
   print(f"-- get competing products market shares DONE")
   return dataframe
 
+# Get the ad-hoc values for the six products 
+# (five competitors and the new product)
 def extract_adhoc():
   rankingscores = []
   worksheet = sys.argv[2] 
@@ -87,8 +96,8 @@ def extract_adhoc():
     # from 1 to 6
     for number in range(1, product.nunique()+1):
       purcentage = product.loc[product == number].value_counts() / len(product)
-      #score formula 
-      #if you have 7 products , from 7 points if you are first to 1 point if you are seventh
+      # Score formula 
+      # If you have 7 products , from 7 points if you are first to 1 point if you are seventh
       score = product.nunique() + 1 - number
       ranking_score_number = purcentage*score
       if len(ranking_score_number.values) > 0:
@@ -98,6 +107,7 @@ def extract_adhoc():
   print(f"-- extract ad-hoc values DONE")
   return pd.DataFrame(dict_ranking_products)
 
+# Apply the polynomial regression depending on the degree of the polynomial
 def eval_regression(degree, X, y, test_size, random_state):
     # Transform features to include higher-order terms
     poly = PolynomialFeatures(degree=degree, include_bias=False)
@@ -115,6 +125,7 @@ def eval_regression(degree, X, y, test_size, random_state):
     print(f"-- eval regression model {degree} DONE")
     return rmse,model,y_predicted
 
+# Get the degree of the polynomial regression regarding the smallest Root Mean Squared Error
 def get_convenient_regression_model(min_degree, max_degree, X, y, test_size, random_state):
   convenient_degree = sys.maxsize
   convenient_X = None
@@ -133,58 +144,49 @@ def get_convenient_regression_model(min_degree, max_degree, X, y, test_size, ran
   print(f"-- get convenient regression model DONE")
   return convenient_degree,min_rmse,min_model,convenient_y_predicted
 
+# Predict the market share of the six products from the ranking scores
+# retrieved from the extract_adhoc() method 
 def get_new_mshares(dataframe):  
-  # Scale the target column to have a sum of 100
-  #dataframe["market_shares"] = (dataframe["market_shares"]/dataframe["market_shares"].sum()) * 100
-
-  print(dataframe)
-
-  # Predict the market share of the new market shares from the ranking scores 
   X, y = dataframe["ranking_scores"].iloc[:-1].values.reshape(-1,1), dataframe["market_shares"].iloc[:-1]
   x=X[:,0]
 
   if dataframe["ranking_scores"].isnull().values.any():
     return pd.DataFrame()
 
+  # Get the convenient degree of the polynmial regression
   degree,rmse,model,y_predicted = get_convenient_regression_model(1, 10, x.reshape(-1,1), y, 0.3, 42)
-  print(f"GET market_shares FROM ranking_scores = {degree}")
-  #print(f"y_predicted = {y_predicted}")
-  #new_product_market_share = 100 - y_predicted.sum()
-  #new_product_market_share = y_predicted[-1]
   new_product_ranking_score = dataframe["ranking_scores"].iloc[-1]
+  print(f"-- convenient degree = {degree}")
+  
+  # Get the new product market share
   mymodel = np.poly1d(np.polyfit(x, y, degree))
   new_product_market_share = mymodel(new_product_ranking_score)
   print("-- predict the new product market share DONE")
 
+  # Create the dataframe of the six products
   six_products_dict = {}
   six_products_dict["barcodes"] = dataframe["barcodes"]
   six_products_dict["sales_numbers"] = dataframe["sales_numbers"]
   six_products_dict["ranking_scores"] = dataframe["ranking_scores"]
   six_products_dict["old_market_shares"] = dataframe["market_shares"]
-  y_predicted = np.append(y_predicted, round(new_product_market_share,2))
+  y_predicted = np.append(y_predicted, round(new_product_market_share, 2))
+  
   # Scale the target column to have a sum of 100
   dataframe["market_shares"] = (y_predicted/y_predicted.sum()) * 100
-  #six_products_dict["new_market_shares"] = dataframe["market_shares"]
   six_products_dict["new_market_shares"] = y_predicted
+  
+  # Update the dataframe of the six products
   df_six_products = pd.DataFrame(six_products_dict)
-  print(df_six_products)
   print(f"-- get new market shares DONE")
   return df_six_products
 
-def plot_polynomial(x, y, polynomial, start, stop):
-  xp = np.linspace(start, stop, 100)
-  _ = plt.plot(x, y, '.', xp, polynomial(xp))
-  plt.show()
-
+# Main method to run in order to output the new product market share
 def main():
-  final_market_shares = {}
   df = create_dataframe()
   df = sort_data_per_barcode(df)
   five_products_barcodes = find_five_products(df)
   df = df.dropna()
   df_ranking_scores = extract_adhoc()
-  outputs_df = None
-  five_bc = []
   df_five_products = get_sales_numbers_for_five_shampoos(df, five_products_barcodes)
   if df_five_products['sales_numbers'].sum() > 0:
     df_five_products_mshares = get_competing_products_mshares(df_five_products)
