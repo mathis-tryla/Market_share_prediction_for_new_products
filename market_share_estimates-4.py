@@ -12,7 +12,9 @@ from scipy.special import logsumexp
 
 def create_dataframe():
   headers = ['timestamp','week','barcodes','type','segment','category','description','weight','sales_numbers','price','sales_value','discounts']
-  return pd.read_csv(sys.argv[1], sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
+  df = pd.read_csv(sys.argv[1], sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
+  print(f"-- create dataframe DONE")
+  return df
 
 def sort_data_per_barcode(df):
   return df.sort_values('barcodes')
@@ -21,12 +23,10 @@ def find_five_products(df):
   five_products_barcodes = []
   for barcode in df.barcodes.unique():
     five_products_barcodes.append(barcode)
+  print(f"-- find five products DONE")
   return five_products_barcodes[:5]
 
-def find_unique_weeks(df):
-  return df["week"].unique()
-
-def get_sales_numbers_for_five_shampoos(df, five_barcodes, week):
+def get_sales_numbers_for_five_shampoos(df, five_barcodes):
   five_new_barcodes = []
   for barcode in five_barcodes:
     if barcode != 'barcode new product':
@@ -39,7 +39,7 @@ def get_sales_numbers_for_five_shampoos(df, five_barcodes, week):
   sales_numbers = []
 
   for barcode in five_new_barcodes:
-    sales_numbers_arr = df.loc[(df['barcodes'] == barcode) & (df['week'] == week), ['barcodes','sales_numbers']].sales_numbers.values
+    sales_numbers_arr = df.loc[(df['barcodes'] == barcode), ['barcodes','sales_numbers']].sales_numbers.values
     sales_number = 0
     for sn in sales_numbers_arr:
       sales_number += sn
@@ -49,17 +49,19 @@ def get_sales_numbers_for_five_shampoos(df, five_barcodes, week):
   five_products_dict["barcodes"] = five_new_barcodes
   sales_numbers.append(0)
   five_products_dict["sales_numbers"] = sales_numbers 
+  print(f"-- get sales numbers for five shampoos DONE")
   return pd.DataFrame(five_products_dict)
 
 def get_competing_products_mshares(dataframe):
   total_sales_number = dataframe['sales_numbers'].sum()
   market_shares_list = [] 
-  print(f"total_sales_number={total_sales_number}")
+  #print(f"total_sales_number={total_sales_number}")
   if total_sales_number > 0:  
     for sn in dataframe['sales_numbers']:
       market_share = (sn/total_sales_number) * 100
       market_shares_list.append(round(market_share, 1))
   dataframe['market_shares'] = market_shares_list
+  print(f"-- get competing products market shares DONE")
   return dataframe
 
 def extract_adhoc():
@@ -93,15 +95,13 @@ def extract_adhoc():
         ranking_score_product += float(ranking_score_number)
     ranking_products.append(ranking_score_product)
   dict_ranking_products['ranking_scores'] = ranking_products
+  print(f"-- extract ad-hoc values DONE")
   return pd.DataFrame(dict_ranking_products)
 
 def eval_regression(degree, X, y, test_size, random_state):
     # Transform features to include higher-order terms
     poly = PolynomialFeatures(degree=degree, include_bias=False)
     X_poly = poly.fit_transform(X)
-
-    # Split data into training and testing sets
-    #X_train, X_test, y_train, y_test = train_test_split(X_poly, y, test_size=test_size, random_state=random_state)
 
     # Fit linear regression model
     reg = LinearRegression()
@@ -112,6 +112,7 @@ def eval_regression(degree, X, y, test_size, random_state):
 
     # Calculate mean squared error
     rmse = mean_squared_error(y, y_predicted, squared=False)
+    print(f"-- eval regression model {degree} DONE")
     return rmse,model,y_predicted
 
 def get_convenient_regression_model(min_degree, max_degree, X, y, test_size, random_state):
@@ -129,6 +130,7 @@ def get_convenient_regression_model(min_degree, max_degree, X, y, test_size, ran
         min_rmse = rmse
         min_model = model
         convenient_y_predicted = y_predicted
+  print(f"-- get convenient regression model DONE")
   return convenient_degree,min_rmse,min_model,convenient_y_predicted
 
 def get_new_mshares(dataframe):  
@@ -146,14 +148,12 @@ def get_new_mshares(dataframe):
 
   degree,rmse,model,y_predicted = get_convenient_regression_model(1, 10, x.reshape(-1,1), y, 0.3, 42)
   print(f"GET market_shares FROM ranking_scores = {degree}")
-  print(f"y_predicted = {y_predicted}")
+  #print(f"y_predicted = {y_predicted}")
   #new_product_market_share = 100 - y_predicted.sum()
   #new_product_market_share = y_predicted[-1]
-  #print(f"new_product_market_share={new_product_market_share}")
   new_product_ranking_score = dataframe["ranking_scores"].iloc[-1]
   mymodel = np.poly1d(np.polyfit(x, y, degree))
   new_product_market_share = mymodel(new_product_ranking_score)
-  print(f"new_product_market_share={new_product_market_share}")
   print("-- predict the new product market share DONE")
 
   six_products_dict = {}
@@ -164,28 +164,16 @@ def get_new_mshares(dataframe):
   y_predicted = np.append(y_predicted, round(new_product_market_share,2))
   # Scale the target column to have a sum of 100
   dataframe["market_shares"] = (y_predicted/y_predicted.sum()) * 100
-  six_products_dict["new_market_shares"] = dataframe["market_shares"]
+  #six_products_dict["new_market_shares"] = dataframe["market_shares"]
+  six_products_dict["new_market_shares"] = y_predicted
   df_six_products = pd.DataFrame(six_products_dict)
   print(df_six_products)
-  # Predict the sales number of the new product from the new market shares 
-  """X, y = df_six_products["new_market_shares"].iloc[:-1].values.reshape(-1, 1), df_six_products["sales_numbers"].iloc[:-1]
-  x=X[:,0]
-  degree,rmse,model,y_predicted = get_convenient_regression_model(1, 10, x.reshape(-1,1), y, 0.3, 42)
-  print(f"GET sales_numbers FROM new_market_shares = {degree}")
-  mymodel = np.poly1d(np.polyfit(x, y, degree))
-  new_product_market_share = df_six_products["new_market_shares"].iloc[-1]
-  estimated_new_product_sales_number = mymodel(new_product_market_share)
-
-  #plot_polynomial(new_product_market_share, estimated_new_product_sales_number, mymodel, 0, 100)
-
-  six_products_dict["new_sales_numbers"] = y_predicted
-  six_products_dict["new_sales_numbers"] = np.append(six_products_dict["new_sales_numbers"], estimated_new_product_sales_number)"""
+  print(f"-- get new market shares DONE")
   return df_six_products
 
 def plot_polynomial(x, y, polynomial, start, stop):
   xp = np.linspace(start, stop, 100)
   _ = plt.plot(x, y, '.', xp, polynomial(xp))
-  #plt.ylim(-100000,40000)
   plt.show()
 
 def main():
@@ -193,26 +181,21 @@ def main():
   df = create_dataframe()
   df = sort_data_per_barcode(df)
   five_products_barcodes = find_five_products(df)
-  unique_weeks = find_unique_weeks(df)
   df = df.dropna()
   df_ranking_scores = extract_adhoc()
-  outputs_df = {}
+  outputs_df = None
   five_bc = []
-  for week in unique_weeks:
-      print(f"week={week}")
-      df_five_products = get_sales_numbers_for_five_shampoos(df, five_products_barcodes, week)
-      if df_five_products['sales_numbers'].sum() > 0:
-        df_five_products_mshares = get_competing_products_mshares(df_five_products)
-        df_five_products_mshares.insert(2, "ranking_scores", pd.Series(df_ranking_scores['ranking_scores'].values), allow_duplicates=True)
-        outputs_df[week] = get_new_mshares(df_five_products_mshares)
-        final_market_shares[week] = outputs_df[week]['new_market_shares'].iloc[-1] 
-      else:
-        outputs_df[week] = None
-  return final_market_shares
+  df_five_products = get_sales_numbers_for_five_shampoos(df, five_products_barcodes)
+  if df_five_products['sales_numbers'].sum() > 0:
+    df_five_products_mshares = get_competing_products_mshares(df_five_products)
+    df_five_products_mshares.insert(2, "ranking_scores", pd.Series(df_ranking_scores['ranking_scores'].values), allow_duplicates=True)
+    output_df = get_new_mshares(df_five_products_mshares)
+    return output_df['new_market_shares'].iloc[-1] 
+  return None
   
 start_time = time.time()
-outputs_df = main()
+output = main()
 end_time = time.time()
 final_time = end_time-start_time
+print(f"-- new product market share = {output} DONE")
 print(f"-- {final_time} seconds --")
-print(outputs_df)
