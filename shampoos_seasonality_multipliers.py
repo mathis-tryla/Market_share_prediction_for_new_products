@@ -53,21 +53,24 @@ def get_sales_numbers_per_quarter_df(df):
 
 def main():
   if len(sys.argv) > 1:
-    remove_bad_lines_file = sys.argv[1] 
-    dataset = sys.argv[2]
+    #remove_bad_lines_file = sys.argv[1] 
+    dataset = sys.argv[1]
 
     # Remove lines which contains more fields than scheduled
-    os.system(f"./{remove_bad_lines_file} {dataset}")
+    #os.system(f"./{remove_bad_lines_file} {dataset}")
 
     # Create the dataframe
     headers = ['timestamp','week','barcode','type','segment','category','description','weight','sales_number','price','sales_value','discounts']
     df = pd.read_csv(dataset, sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
+    print("-- Read data into dataframe DONE")
 
     # Get the sales number per quarter of 12 weeks or less
     df_sales_per_quarter = get_sales_numbers_per_quarter_df(df)
+    print("-- Get the sales number per quarter of 12 weeks or less DONE")
 
     # Get the total number of sales stored in the dataset  
     total_sales_numbers = df['sales_number'].sum()
+    print("-- Get the total number of sales stored in the dataframe DONE")
 
     # Calculate the part of sales numbers per quarter
     seasonality_multipliers = {}
@@ -79,5 +82,6 @@ start_time = time.time()
 output = main()
 end_time = time.time()
 final_time = end_time - start_time
-print(f"-- shampoos seasonality multipliers = {output} DONE")
+print(f"-- Calculate shampoos seasonality multipliers DONE")
+print(f"-- Output = {output} DONE")
 print(f"-- {final_time} seconds--")
