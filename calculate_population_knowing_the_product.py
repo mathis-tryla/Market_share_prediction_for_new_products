@@ -11,6 +11,7 @@ print("Percentage of population with " + str(targeted_nb_of_contacts) + " or mor
 avgPopHit = stats.nbinom.cdf(frequency-targeted_nb_of_contacts, targeted_nb_of_contacts, reach)
 print(avgPopHit)
 
+#Printing the distribution of probability for the selected values
 x = np.arange(stats.nbinom.ppf(0.01, targeted_nb_of_contacts, reach),stats.nbinom.ppf(avgPopHit+0.01, targeted_nb_of_contacts, reach))
 
 fig, ax = plt.subplots(1, 1)
