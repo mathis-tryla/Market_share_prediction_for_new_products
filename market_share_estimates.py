@@ -14,7 +14,7 @@ from scipy.special import logsumexp
 def create_dataframe():
   headers = ['libelle_var','week','barcodes','type','segment','category','description','weight','sales_numbers','price','sales_value','discounts']
   df = pd.read_csv(sys.argv[1], sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
-  print(f"-- create dataframe DONE")
+  print(f"-- Read data into dataframe DONE")
   return df
 
 # Sort data per ascending barcode
@@ -26,7 +26,7 @@ def find_five_products(df):
   five_products_barcodes = []
   for barcode in df.barcodes.unique():
     five_products_barcodes.append(barcode)
-  print(f"-- find five products DONE")
+  print(f"-- Find five products DONE")
   return five_products_barcodes[:5]
 
 # Get the sales numbers of the five competitors by their barcode
@@ -54,7 +54,7 @@ def get_sales_numbers_for_five_shampoos(df, five_barcodes):
   five_products_dict["barcodes"] = five_new_barcodes
   sales_numbers.append(0)
   five_products_dict["sales_numbers"] = sales_numbers 
-  print(f"-- get sales numbers for five shampoos DONE")
+  print(f"-- Get sales numbers for five shampoos DONE")
   return pd.DataFrame(five_products_dict)
 
 # Calculate the market shares of the five competitors by retrieving their sales numbers
@@ -66,7 +66,7 @@ def get_competing_products_mshares(dataframe):
       market_share = (sn/total_sales_number) * 100
       market_shares_list.append(round(market_share, 1))
   dataframe['market_shares'] = market_shares_list
-  print(f"-- get competing products market shares DONE")
+  print(f"--Get competing products market shares DONE")
   return dataframe
 
 # Get the ad-hoc values for the six products 
@@ -102,7 +102,7 @@ def extract_adhoc():
         ranking_score_product += float(ranking_score_number)
     ranking_products.append(ranking_score_product)
   dict_ranking_products['ranking_scores'] = ranking_products
-  print(f"-- extract ad-hoc values DONE")
+  print(f"-- Extract ad-hoc values DONE")
   return pd.DataFrame(dict_ranking_products)
 
 # Apply the polynomial regression depending on the degree of the polynomial
@@ -120,7 +120,7 @@ def eval_regression(degree, X, y, test_size, random_state):
 
     # Calculate mean squared error
     rmse = mean_squared_error(y, y_predicted, squared=False)
-    print(f"-- eval regression model {degree} DONE")
+    print(f"-- Evaluate regression model {degree} DONE")
     return rmse,model,y_predicted
 
 # Get the degree of the polynomial regression regarding the smallest Root Mean Squared Error
@@ -139,7 +139,7 @@ def get_convenient_regression_model(min_degree, max_degree, X, y, test_size, ran
         min_rmse = rmse
         min_model = model
         convenient_y_predicted = y_predicted
-  print(f"-- get convenient regression model DONE")
+  print(f"-- Get convenient regression model DONE")
   return convenient_degree,min_rmse,min_model,convenient_y_predicted
 
 # Predict the market share of the six products from the ranking scores
@@ -154,12 +154,12 @@ def get_new_mshares(dataframe):
   # Get the convenient degree of the polynmial regression
   degree,rmse,model,y_predicted = get_convenient_regression_model(1, 10, x.reshape(-1,1), y, 0.3, 42)
   new_product_ranking_score = dataframe["ranking_scores"].iloc[-1]
-  print(f"-- convenient degree = {degree}")
+  print(f"-- Convenient degree = {degree} DONE")
   
   # Get the new product market share
   mymodel = np.poly1d(np.polyfit(x, y, degree))
   new_product_market_share = mymodel(new_product_ranking_score)
-  print("-- predict the new product market share DONE")
+  print("-- Predict the new product market share DONE")
 
   # Create the dataframe of the six products
   six_products_dict = {}
@@ -175,7 +175,7 @@ def get_new_mshares(dataframe):
   
   # Update the dataframe of the six products
   df_six_products = pd.DataFrame(six_products_dict)
-  print(f"-- get new market shares DONE")
+  print(f"-- Get new market shares DONE")
   return df_six_products
 
 # Main method to run in order to output the new product market share
@@ -197,5 +197,5 @@ start_time = time.time()
 output = main()
 end_time = time.time()
 final_time = end_time-start_time
-print(f"-- new product market share = {output} DONE")
+print(f"-- Output = {output}%")
 print(f"-- {final_time} seconds --")
