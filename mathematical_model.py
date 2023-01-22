@@ -81,7 +81,7 @@ def main():
 
     # export points to csv
     data_points_ms = {'week': range(26), 'predicted': market_share_per_week}
-    data_points_sn = {'week': range(26), 'predicted': sales_number_per_week}
+    data_points_sn = {'week': range(26), 'predicted': sales_number_per_week[:26]}
     export_to_csv(data_points_ms, "ms")
     export_to_csv(data_points_sn, "sn")
 
