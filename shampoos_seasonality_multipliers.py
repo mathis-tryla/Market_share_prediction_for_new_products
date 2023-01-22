@@ -3,11 +3,11 @@
 # 2: python3 shampoos_seasonality_multipliers.py <remove_bad_lines.sh> <dataset.txt>
 
 import pandas as pd
-from io import StringIO, BytesIO
-import math, time, os, sys 
-from matplotlib import pyplot as plt
-from datetime import datetime
-from tqdm import tqdm
+import os
+
+# Get sales numbers per week
+def get_sales_numbers_per_week_df(dataframe):
+  return dataframe.groupby('week')["sales_number"].sum()
 
 # Get sales numbers per quarter
 def get_sales_numbers_per_quarter(dataframe):
@@ -33,9 +33,8 @@ def get_sales_numbers_per_quarter(dataframe):
   return quarter_sales_numbers_total
 
 # Convert sales numbers per quarter dict into dataframe
-def get_sales_numbers_per_quarter_df(df):
-  season_sales = 0
-  sales_per_quarter = get_sales_numbers_per_quarter(df)
+def get_sales_numbers_per_quarter_df(dataframe):
+  sales_per_quarter = get_sales_numbers_per_quarter(dataframe)
   sales_per_quarter_dict = {}
   for i in range(len(sales_per_quarter)):
     quarter_sales = sales_per_quarter[i].get('sales_numbers')
@@ -46,42 +45,37 @@ def get_sales_numbers_per_quarter_df(df):
       sales_per_quarter_dict[index] = quarter_sales
   return pd.DataFrame(sales_per_quarter_dict, index=[0])
 
-""" sys.argv[]
+""" Parameters
 1 : Script which removes bad lines in the dataset
 2 : Dataset file containing shampoos data
 """
 
-def main():
-  if len(sys.argv) > 1:
-    #remove_bad_lines_file = sys.argv[1] 
-    dataset = sys.argv[1]
+def get_shampoos_seasonality_multipliers(dataset, remove_bad_lines_file, is_per_week=True):
+  # Remove lines which contains more fields than scheduled
+  os.system(f"./{remove_bad_lines_file} {dataset}")
 
-    # Remove lines which contains more fields than scheduled
-    #os.system(f"./{remove_bad_lines_file} {dataset}")
+  # Create the dataframe
+  headers = ['libelle_var','week','barcode','type','segment','category','description','weight','sales_number','price','sales_value','discounts']
+  df = pd.read_csv(dataset, sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
+  print("-- Read data into dataframe DONE")
 
-    # Create the dataframe
-    headers = ['timestamp','week','barcode','type','segment','category','description','weight','sales_number','price','sales_value','discounts']
-    df = pd.read_csv(dataset, sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
-    print("-- Read data into dataframe DONE")
+  # Get the total number of sales stored in the dataset  
+  total_sales_numbers = df['sales_number'].sum()
+  print("-- Get the total number of sales stored in the dataframe DONE")
 
+  seasonality_multipliers = {}
+  if is_per_week:
+    # Get the sales number per week
+    df_sales_per_week = get_sales_numbers_per_week_df(df)
+    print("-- Get the sales number per week DONE")
+    # Calculate the part of sales numbers per week
+    for (column_name, column_data) in df_sales_per_week.items():
+      seasonality_multipliers[column_name] = column_data/total_sales_numbers
+  else:
     # Get the sales number per quarter of 12 weeks or less
     df_sales_per_quarter = get_sales_numbers_per_quarter_df(df)
     print("-- Get the sales number per quarter of 12 weeks or less DONE")
-
-    # Get the total number of sales stored in the dataset  
-    total_sales_numbers = df['sales_number'].sum()
-    print("-- Get the total number of sales stored in the dataframe DONE")
-
     # Calculate the part of sales numbers per quarter
-    seasonality_multipliers = {}
     for (column_name, column_data) in df_sales_per_quarter.items():
       seasonality_multipliers[column_name] = column_data.values/total_sales_numbers
-  return seasonality_multipliers
-
-start_time = time.time()
-output = main()
-end_time = time.time()
-final_time = end_time - start_time
-print(f"-- Calculate shampoos seasonality multipliers DONE")
-print(f"-- Output = {output} DONE")
-print(f"-- {final_time} seconds--")
+  return seasonality_multipliers, total_sales_numbers
