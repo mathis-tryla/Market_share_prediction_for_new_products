@@ -42,8 +42,6 @@ def main():
         # one point for each week of the 1st semester on the market
         market_share_per_week = []
         for week in range(26):
-            print(week)
-            print(population_knowing_the_product["predicted"][week])
             # Gompertz curve equation
             market_share_curr_week = (population_knowing_the_product["predicted"][week]/100) * market_share_max * math.exp(-displacement * math.exp(-global_growth_rate * week))
             market_share_per_week.append(market_share_curr_week)

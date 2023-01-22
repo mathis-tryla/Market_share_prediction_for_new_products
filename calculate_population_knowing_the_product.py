@@ -3,7 +3,6 @@
 # Ex : python3 calculate_population_knowing_the_product.py 3 0.25 2 10
 
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 import pandas
 from scipy import stats
@@ -56,8 +55,7 @@ def main():
 
         return "population_knowing_the_product.csv created"
     else:
-        print("wrong number of arguments")
-        return 0
+        return "wrong number of arguments"
 
 
 start_time = time.time()
