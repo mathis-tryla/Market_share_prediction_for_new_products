@@ -1,19 +1,16 @@
 # How to run this script : python3 market_share_estimates.py <dataset.txt> <ranking_outputs.xlsx>
 
-import matplotlib.pyplot as plt
-import sys, time
+import sys, os
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error
 import pandas as pd
-from io import StringIO
-from scipy.special import logsumexp
 
 # Create dataframe from the txt file passed as a first argument of this python script execution
-def create_dataframe():
+def create_dataframe(dataset):
   headers = ['libelle_var','week','barcodes','type','segment','category','description','weight','sales_numbers','price','sales_value','discounts']
-  df = pd.read_csv(sys.argv[1], sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
+  df = pd.read_csv(dataset, sep=';', names=headers, index_col=False, encoding="utf-8", encoding_errors="ignore")
   print(f"-- Read data into dataframe DONE")
   return df
 
@@ -71,9 +68,8 @@ def get_competing_products_mshares(dataframe):
 
 # Get the ad-hoc values for the six products 
 # (five competitors and the new product)
-def extract_adhoc():
-  rankingscores = []
-  worksheet = sys.argv[2] 
+def extract_adhoc(ad_hoc):
+  worksheet = ad_hoc 
   df = pd.read_excel(worksheet, sheet_name=0)
   dfprods = []
   dfprod1 = df.iloc[:, 5]
@@ -179,23 +175,17 @@ def get_new_mshares(dataframe):
   return df_six_products
 
 # Main method to run in order to output the new product market share
-def main():
-  df = create_dataframe()
-  df = sort_data_per_barcode(df)
-  five_products_barcodes = find_five_products(df)
-  df = df.dropna()
-  df_ranking_scores = extract_adhoc()
-  df_five_products = get_sales_numbers_for_five_shampoos(df, five_products_barcodes)
-  if df_five_products['sales_numbers'].sum() > 0:
-    df_five_products_mshares = get_competing_products_mshares(df_five_products)
-    df_five_products_mshares.insert(2, "ranking_scores", pd.Series(df_ranking_scores['ranking_scores'].values), allow_duplicates=True)
-    output_df = get_new_mshares(df_five_products_mshares)
-    return output_df['new_market_shares'].iloc[-1] 
+def get_np_market_share_max(dataset, ad_hoc):
+  if os.path.isfile(dataset) and os.path.isfile(ad_hoc):
+    df = create_dataframe(dataset)
+    df = sort_data_per_barcode(df)
+    five_products_barcodes = find_five_products(df)
+    df = df.dropna()
+    df_ranking_scores = extract_adhoc(ad_hoc)
+    df_five_products = get_sales_numbers_for_five_shampoos(df, five_products_barcodes)
+    if df_five_products['sales_numbers'].sum() > 0:
+      df_five_products_mshares = get_competing_products_mshares(df_five_products)
+      df_five_products_mshares.insert(2, "ranking_scores", pd.Series(df_ranking_scores['ranking_scores'].values), allow_duplicates=True)
+      output_df = get_new_mshares(df_five_products_mshares)
+      return output_df['new_market_shares'].iloc[-1] 
   return None
-  
-start_time = time.time()
-output = main()
-end_time = time.time()
-final_time = end_time-start_time
-print(f"-- Output = {output}%")
-print(f"-- {final_time} seconds --")
