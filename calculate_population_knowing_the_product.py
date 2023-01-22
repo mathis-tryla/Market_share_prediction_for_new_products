@@ -1,38 +1,60 @@
 # How to run this script :
-# 1: python3 calculate_population_knowing_the_product.py targeted_nb_of_contacts(int) reach(float) frequency(float)
-# Ex : python3 calculate_population_knowing_the_product.py 3 0.25 10
+# 1: python3 calculate_population_knowing_the_product.py targeted_nb_of_contacts(int) reach(float) airings_per_week(float) length_of_campaign_in_week(int)
+# Ex : python3 calculate_population_knowing_the_product.py 3 0.25 2 10
 
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas
 from scipy import stats
 import sys
 
-# Show the plot of the distribution of population knowing the product
-def show_plot(targeted_nb_of_contacts, reach, avgPopHit):
 
-    x = np.arange(stats.nbinom.ppf(0.01, targeted_nb_of_contacts, reach),
-                  stats.nbinom.ppf(avgPopHit + 0.01, targeted_nb_of_contacts, reach))
+# Show the evolution of the population knowing the product
+def show_model_simulation(data):
+    x = data['week']
+    y = data['predicted']
 
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(x, stats.nbinom.pmf(x, targeted_nb_of_contacts, reach), 'bo', ms=7, label='nbinom pmf')
-    ax.vlines(x, 0, stats.nbinom.pmf(x, targeted_nb_of_contacts, reach), colors='b', lw=6, alpha=0.5)
+    plt.plot(x, y, "r", label="Predicted")
+    plt.title("The evolution of the population knowing the new product")
+    plt.xlabel("time (week)")
+    plt.ylabel("population knowing the new product (%)")
+    plt.legend(loc="lower right")
+    plt.show()
 
-    plt.show(block=True)
-    return
+
+# Export the points to csv
+def export_to_csv(data):
+    df = pandas.DataFrame(data=data)
+    df.set_index('week', inplace=True)
+    df.to_csv("population_knowing_the_product.csv")
+
 
 def main():
-    if len(sys.argv) > 1:
+    if len(sys.argv) == 5:
         targeted_nb_of_contacts = int(sys.argv[1])
         reach = float(sys.argv[2])
         frequency = float(sys.argv[3])
+        length_of_campaign = int(sys.argv[4])
+        if length_of_campaign > 26:
+            length_of_campaign = 26
 
-        print("Percentage of population with " + str(targeted_nb_of_contacts) + " or more contact with advertising, for " + str(frequency) + " airings with " + str(round(reach, 2)) + " mean reach")
-        avgPopHit = stats.nbinom.cdf(frequency-targeted_nb_of_contacts, targeted_nb_of_contacts, reach)
-        print(avgPopHit)
+        pop_hit_per_week = []
+        # Diffusion of the campaign
+        for week in range(length_of_campaign):
+            airings_after_curr_week = frequency*(week+2)
+            pop_hit_curr_week = 100 * stats.nbinom.cdf(airings_after_curr_week - targeted_nb_of_contacts, targeted_nb_of_contacts, reach)
+            pop_hit_per_week.append(pop_hit_curr_week)
+        # Fill awareness after the campaign
+        for week in range(26-length_of_campaign):
+            pop_hit_per_week.append(pop_hit_per_week[length_of_campaign-1])
 
-        show_plot(targeted_nb_of_contacts, reach, avgPopHit)
-        return avgPopHit
+        data = {'week': range(26), 'predicted': pop_hit_per_week}
+        export_to_csv(data)
+
+        show_model_simulation(data)
+
+        return "population_knowing_the_product.csv created"
     else:
         print("wrong number of arguments")
         return 0
