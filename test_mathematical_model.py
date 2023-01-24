@@ -74,22 +74,22 @@ def update_dashboard(population_knowing_the_product, dv, market_share_max, globa
     return data_points_ms, data_points_sn
 
 def main(dv=''):
-    """dataset = input("Shampoos dataset file: ")
+    dataset = input("Shampoos dataset file: ")
     remove_bad_lines_file = input("Remove bad lines file: ")
     ad_hoc = input("Ad-hoc file: ")
     targeted_nb_of_contacts = int(input("Targeted nb of contacts: "))
     reach = float(input("Reach: "))
     frequency = float(input("Frequency: "))
     length_of_campaign = int(input("Length of campaign: "))
-    dv = float(input("DV (between 0 and 1): "))"""
-    #dataset="../SHAMPOING_UC1.txt"
+    dv = float(input("DV (between 0 and 1): "))
+    """dataset="../SHAMPOING_UC1.txt"
     dataset="../SHAMPOING_UC1_026.txt"
     remove_bad_lines_file="../remove_bad_lines_shampoo.sh"
     ad_hoc="../ranking.xlsx"
     targeted_nb_of_contacts=3
     reach=0.25
     frequency=0.5
-    length_of_campaign=10
+    length_of_campaign=10"""
     if dv == '':
         dv=0.3
 
