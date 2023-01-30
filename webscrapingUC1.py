@@ -63,6 +63,7 @@ options = webdriver.ChromeOptions()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
+
 # open it, go to a website, and get results
 wdmain = webdriver.Chrome('.\chromedriver_win32\chromedriver',options=options)
 wdmain.get(google_serp["url"])
@@ -99,13 +100,12 @@ print(len(products))
 while button_showed ==1 and len(products)<100 :
   try:
     button = wdmain.find_element(By.CSS_SELECTOR,"#prodlist > div.prodlist__list > div.prodlist__list-wrap.prodlist__list-stories-1 > div.prodlist__loadmore > button")
-    #prodlist > div.prodlist__list > div.prodlist__list-wrap.prodlist__list-stories-1 > div.prodlist__loadmore > button
-    #prodlist > div.prodlist__list > div.prodlist__list-wrap.prodlist__list-stories-1 > div.prodlist__loadmore > button
     wdmain.execute_script("arguments[0].click()",button)
     time.sleep(1)
     soup = BeautifulSoup(wdmain.page_source, "html.parser")
     products = soup.find_all("div",{"class":domain["class_products_menu"]})
     print(len(products))
+    # error if you don't find a show more button (you keep going without clicking on it)
   except AttributeError: 
     button_showed=0
     continue
