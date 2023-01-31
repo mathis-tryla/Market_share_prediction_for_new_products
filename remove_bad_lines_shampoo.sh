@@ -7,4 +7,4 @@ for index in "${indexesArr[@]}"
 do
     sed -i -e ''"${index}d"'' $1
 done
-echo "-- remove bad lines from dataset DONE"
+echo "-- Remove bad lines from dataset DONE"
