@@ -1,5 +1,6 @@
 # How to run this script :
 # 1 : create your open ai api key on their website and put it in a file in this folder.
+# 2 : download classification_model_weights.pth from Gdrive and put it in this folder. link : https://drive.google.com/file/d/1FHfWZwTjwmj6Os0vZGhiiTfq60TjkgsD/view?usp=sharing
 # 2 : install all dependencies.
 # 3 : python3 extract_features.py comments.txt(file) classification_model_weights.pth(file) api_key.txt(file)
 # Ex : python3 extract_features.py comments.txt classification_model_weights.pth api_key.txt
