@@ -17,6 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time 
+import numpy as np
 import os
 
 #-- Websites to scrape
@@ -44,6 +45,8 @@ google_serp = {
 
 # Number of comments showed when you arrive on the product web page
 NUMBER_COMMENTS_SHOWED = 3
+
+min_nb_products_scrape= 25
 
 # Key words we have to put into the google search bar to find the product 
 brand = "Nocibé"
@@ -93,12 +96,14 @@ time.sleep(3)
 #Only with nocibé 
 # if the button is not showed because we have all the products , button_showed = 0
 button_showed=1
+soup = BeautifulSoup(wdmain.page_source,'html.parser')
 products = soup.find_all("div",{"class":domain["class_products_menu"]})
-print(len(products))
 
-# for the first test we want around 100 products
-while button_showed ==1 and len(products)<100 :
+# we want to click on the "show more products" button if it is showed and if we have less comments showed than expected ( =min_nb_products_scrape)
+
+while button_showed ==1 and len(products)<min_nb_products_scrape:
   try:
+    # we try to find the button
     button = wdmain.find_element(By.CSS_SELECTOR,"#prodlist > div.prodlist__list > div.prodlist__list-wrap.prodlist__list-stories-1 > div.prodlist__loadmore > button")
     wdmain.execute_script("arguments[0].click()",button)
     time.sleep(1)
@@ -107,83 +112,91 @@ while button_showed ==1 and len(products)<100 :
     print(len(products))
     # error if you don't find a show more button (you keep going without clicking on it)
   except AttributeError: 
+    # the button does not exists, so we do not click and scrape every product of the main page
     button_showed=0
     continue
 
 soup = BeautifulSoup(wdmain.page_source, "html.parser")
 products = soup.find_all("div",{"class":domain["class_products_menu"]})
- 
+
+print("NUMBER PRODUCT: ")
+print(len(products))
+
 # ---- WEBSCRAPING COMMENTS SHOWED ----
 
 for product in products:
-  name_product = product.find("strong",{"class":domain["class_name_products_menu"]}).get_text(strip=True)
-  description_product = product.find("span",{"class":domain["class_name_products_menu"]}).get_text(strip=True)
-  name_product = name_product + " | " + description_product
-  url_product ="https://www.nocibe.fr"+product.find('a')['href'].strip()
-  print(url_product)
+  
+  # we try to scrape comments of a product
+  # if we can't or if a problem happened, we skip to another product 
+  try:
+    name_product = product.find("strong",{"class":domain["class_name_products_menu"]}).get_text(strip=True)
+    description_product = product.find("span",{"class":domain["class_name_products_menu"]}).get_text(strip=True)
+    name_product = name_product + " | " + description_product
+      # it is the url product we retrieve from the menu
+    url_product ="https://www.nocibe.fr"+product.find('a')['href'].strip()
+    print(url_product)
 
-  comment_list = []
-
-  # ---- WEBDRIVER INITIALIZATION----
-
-  wdmain.get(url_product)
+  # --- LIST OF COMMENTS INITIALIZATION
+    comment_list = []
+    wdmain.get(url_product)
 
   #Only with Nocibé, it is a element that is loaded when you open a product page
-  element = WebDriverWait(wdmain, 8).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="WAR"]'))).get_attribute("innerHTML")
+    element = WebDriverWait(wdmain, 25).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="WAR"]'))).get_attribute("innerHTML")
   
 
   # ---- RETRIEVING PRODUCT COMMENTS ----
 
-  soup = BeautifulSoup(wdmain.page_source,'html.parser')
-  nb_recherches = wdmain.find_element(By.CLASS_NAME,"bv_numReviews_text").text
+    soup = BeautifulSoup(wdmain.page_source,'html.parser')
+    nb_recherches = wdmain.find_element(By.CLASS_NAME,"bv_numReviews_text").text
 
   # - We delete the parentheses because we get the number in the following form : (NUMBER)
   # and we just want to have the number
 
-  characters = "()"
-  for x in range(len(characters)):
+    characters = "()"
+    for x in range(len(characters)):
       nb_recherches = nb_recherches.replace(characters[x],"")
 
-  print(nb_recherches)
+    print("number comments: "+nb_recherches)
   # in the product webpage, we click on
-  if int(nb_recherches) >= NUMBER_COMMENTS_SHOWED:
-    nb_click =(int(nb_recherches)-NUMBER_COMMENTS_SHOWED)/30 if (int(nb_recherches)-NUMBER_COMMENTS_SHOWED)%30 == 0 else (int(nb_recherches)-NUMBER_COMMENTS_SHOWED)/30 + 1
-  else:
-    nb_click = 0
+    if int(nb_recherches) >= NUMBER_COMMENTS_SHOWED:
+      nb_click =(int(nb_recherches)-NUMBER_COMMENTS_SHOWED)/30 if (int(nb_recherches)-NUMBER_COMMENTS_SHOWED)%30 == 0 else (int(nb_recherches)-NUMBER_COMMENTS_SHOWED)/30 + 1
+    else:
+      nb_click = 0
 
-  for i in range (0,int(nb_click)):
-    # CHANGE CSS SELECTOR OF THE BUTTON "SHOW MORE" IF IT IS NOT NOCIBE WEBPAGE
-    button =wdmain.find_element(By.CSS_SELECTOR,"#BVRRContainer > div > div > div > div > div.bv-content-pagination > div > button")
-    #button clicked
-    wdmain.execute_script("arguments[0].click()",button)
-    time.sleep(1)
+    for i in range (0,int(nb_click)):
+      # CHANGE CSS SELECTOR OF THE BUTTON "SHOW MORE" IF IT IS NOT NOCIBE WEBPAGE
+      button =wdmain.find_element(By.CSS_SELECTOR,"#BVRRContainer > div > div > div > div > div.bv-content-pagination > div > button")
+      #button clicked
+      wdmain.execute_script("arguments[0].click()",button)
+      time.sleep(1)
     
 
-  soup = BeautifulSoup(wdmain.page_source,'html.parser')
+    soup = BeautifulSoup(wdmain.page_source,'html.parser')
 
   # -- Webscraping comments showed
 
-  cases = soup.find_all("li",{"class":domain["item_comment_id"]})
-  print(len(cases))
+    cases = soup.find_all("li",{"class":domain["item_comment_id"]})
+    print(len(cases))
 
   # ---- RETRIEVING COMMENTS----
 
-  for item in cases:
-    comment = item.find("div",{"class":domain["comment_id"]}).get_text(strip=True)
+    for item in cases:
+      comment = item.find("div",{"class":domain["comment_id"]}).get_text(strip=True)
+      #if only there is this part in the comment
     #if "[Cet avis a été recueilli en réponse à une offre.]" in comment:
      # comment = comment.replace("[Cet avis a été recueilli en réponse à une offre.]","")
-    comment_list.append(comment)
-  print(comment_list)
+      comment_list.append(comment)
+    print(comment_list)
 
 # comments added in list
-  product = {
-      'name' : name_product,
-      'avis' : comment_list
-  }
-  list_comments_products.append(product)
-  
+    for comment in comment_list:
+        list_comments_products.append(comment)
+  except:
+    continue
 
 print(list_comments_products)
+
+# we are creating comments file .txt with all the consumer comments 
 
 print("-- COMMENTS FILE CREATION --")
 ar = np.array(list_comments_products) 
