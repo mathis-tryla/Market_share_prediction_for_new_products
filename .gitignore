@@ -2,5 +2,3 @@ __pycache__/
 env/
 *.csv
 competing*
-app/extract_features/classification_model_weights.pth
-*.pth
