@@ -1,0 +1,4 @@
+*.zip
+Dockerfile.zip
+.gitignore
+env/
