@@ -2,3 +2,4 @@
 Dockerfile.zip
 .gitignore
 env/
+*.pth

@@ -58,6 +58,7 @@ def main(dv=''):
     nb_competing_products = int(input("Number of competing products: "))
     products_brand_to_webscrape = input("Product website to webscrape: ")
     product_type_to_webscrape = input("Product category to webscrape: ")
+    min_nb_products_webscrape = int(input("Number of products to webscrape: "))
     nb_clusters_reviews = int(input("Number of clusters for products reviews: "))
     
     # Check if user typed dv value
@@ -104,7 +105,7 @@ def main(dv=''):
     market_share_max, prediction_error = get_np_market_share_max(df, ad_hoc, nb_competing_products)
     seasonality_multipliers, total_sales_numbers = get_seasonality_multipliers(df)
     global_growth_rate = visibility_score + fidelity_score
-    webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape)
+    webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape, min_nb_products_webscrape)
     innovation_score = get_innovation_score('./webscraping/comments.txt', './extract_features/classification_model_weights.pth', nb_clusters_reviews)
 
     data_points_ms, data_points_sn = update_dashboard(population_knowing_the_product, dv, market_share_max, global_growth_rate, seasonality_multipliers, total_sales_numbers, displacement, innovation_score)

@@ -217,7 +217,8 @@ def cluster_reviews(df, nb_clusters_reviews, show = False):
 def calculate_innovation_score(df):
     nb_reviews_asking_new_features = len(df[df['category'] == 4])
     nb_reviews_total = len(df)
-    return nb_reviews_asking_new_features / nb_reviews_total
+    score = (nb_reviews_asking_new_features / nb_reviews_total)
+    return round(score, 10)
 
 def get_innovation_score(comments_file, classification_model_weights, nb_clusters_reviews):
     # Initialize camembert and get stop words

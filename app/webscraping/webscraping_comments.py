@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time 
 import numpy as np
 
-def webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape):
+def webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape, min_nb_products_webscrape):
     #-- Websites to scrape
     # Here we are just scraping in Nocibe Website
     domain = {
@@ -40,8 +40,6 @@ def webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape):
 
     # Number of comments showed when you arrive on the product web page
     NUMBER_COMMENTS_SHOWED = 3
-
-    MIN_NB_PRODUCTS_SCRAPE = 3
 
     # specification of nocibe shampoing webpage, it's to have the best product ratings so you avoid having products without comments
     lab_top_product_ratings="/TW-1055D_1054D_1060D#products"
@@ -95,7 +93,7 @@ def webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape):
 
     # we want to click on the "show more products" button if it is showed and if we have less comments showed than expected ( =nb_products_to_webscrape)
 
-    while button_showed == 1 and len(products) < MIN_NB_PRODUCTS_SCRAPE:
+    while button_showed == 1 and len(products) < min_nb_products_webscrape:
         try:
             # we try to find the button
             button = wdmain.find_element(By.CSS_SELECTOR,"#prodlist > div.prodlist__list > div.prodlist__list-wrap.prodlist__list-stories-1 > div.prodlist__loadmore > button")
@@ -112,12 +110,10 @@ def webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape):
     soup = BeautifulSoup(wdmain.page_source, "html.parser")
     products = soup.find_all("div",{"class":domain["class_products_menu"]})
 
-    print(f"-- Number of products to webscrape: {len(products)}")
-
     # ---- WEBSCRAPING COMMENTS SHOWED ----
     count_product = 0
     for product in products:
-        while count_product < MIN_NB_PRODUCTS_SCRAPE:
+        while count_product < min_nb_products_webscrape:
             count_product = count_product + 1
             # we try to scrape comments of a product
             # if we can't or if a problem happened, we skip to another product 
