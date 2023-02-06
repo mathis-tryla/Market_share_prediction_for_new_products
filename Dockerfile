@@ -7,7 +7,6 @@ RUN apt-get -y install python3
 RUN apt-get -y install python3-pip
 RUN apt-get -y install python3-venv
 RUN apt-get -y install net-tools curl nano
-RUN apt-get -y install chromium-browser
 
 COPY . /home/market_share_prediction_for_new_products/
 
