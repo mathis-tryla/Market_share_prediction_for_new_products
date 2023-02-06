@@ -63,7 +63,7 @@ def webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape, m
     options.add_argument("--remote-debugging-port=9222")   
 
     # open it, go to a website, and get results
-    wdmain = webdriver.Chrome('/home/bamowec928/PFE-test/app/webscraping/chromedriver',options=options)
+    wdmain = webdriver.Chrome('chromedriver',options=options)
     wdmain.get(google_serp["url"])
     content = wdmain.page_source.encode('utf-8').strip()
     time.sleep(1)
