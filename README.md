@@ -46,7 +46,7 @@ In order to fill in the ad-hoc answers document, you have to fill in the app/ran
 | Quelle est votre tranche de salaire annuelle brute ?  | [Moins de 20 434€;20 435€ - 25 345€;25 346 € - 31 621€;31 621 € - 40 807€;40 808€ - 65 156€] | 20 435€ - 25 345€ |
 | Connaissez-vous chacun des produits concurrents déjà commercialisés ? [Oui/Non] | [Oui;Non] | Oui |
 | Classez le produit étudié et ces <n> produits en fonction de votre volonté d’achat (ranking) entre 1 et <n> [prod<n>]  | [1,2,...,n] | 2 |
-| A quelle fréquence souhaitez-vous racheter ce produit dans le futur ? | [1 fois toutes les 2 semaines;1 fois par mois.;Au plus une fois tous les 2 mois.] | 1 fois par mois.  |
+| A quelle fréquence souhaitez-vous racheter ce produit dans le futur ? | [2 fois ou plus par semaine.;1 fois par semaine.;1 fois toutes les 2 semaines.;1 fois par mois.;Au plus une fois tous les 2 mois.] | 1 fois par mois.  |
 | Sur une échelle de 1 à 5 à quel point recommanderiez-vous ce produit à vos proches ? | [1;2;3;4;5] | 4  |
 | Notez le rapport qualité-prix du produit entre 1 et 5 | [1;2;3;4;5] | 5  |
 | Notez le visuel de l'emballage du produit entre 1 et 5 | [1;2;3;4;5] | 3  |
