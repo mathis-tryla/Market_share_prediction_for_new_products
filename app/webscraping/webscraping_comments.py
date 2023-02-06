@@ -16,7 +16,7 @@ import numpy as np
 
 def webscrape_comments(products_brand_to_webscrape, product_type_to_webscrape, min_nb_products_webscrape):
     #-- Websites to scrape
-    # Here we are just scraping in Nocibe Website
+    # HERE : you can specify the website to webscrape, and the comment html id
     domain = {
           "domain":"https://www.nocibe.fr/cheveux/shampoing/C-47970",
           "url":"",
